@@ -36,13 +36,13 @@ db.collection('Todos').find().count().then((count) => {
     console.log(`Todos Count : ${count}`);
 }, (err) => {
     console.log('unable to fetch todos', err);
-})
+});
 
 db.collection('Users').find({name: 'abhiman'}).count().then((count) => {
    console.log(`User count is ${count}`);
 }, (err) => {
     console.log('unable to fetch todos', err);
-})
+});
 
    db.close();
 });
