@@ -1,4 +1,5 @@
 const {ObjectId} = require('mongodb');
+const _ = require('lodash');
 
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -8,6 +9,7 @@ var {User} = require('./models/user');
 
 
 var app = express();
+var port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
@@ -22,6 +24,19 @@ app.post('/todos', (req, res) => {
    }, (err) => {
       res.status(400).send(err);
    });
+})
+
+app.post('/users', (req, res) => {
+    var user = new User({
+        email : req.body.email,
+        password : req.body.password
+    });
+
+    user.save().then((doc) => {
+       res.send(doc);
+    }, (err) => {
+        res.send(err);
+    });
 })
 
 app.get('/todos', (req, res) => {
@@ -47,24 +62,49 @@ app.get('/todos/:id', (req, res) => {
   });
 })
 
-app.post('/users', (req, res) => {
-    var user = new User({
-        email : req.body.email,
-        password : req.body.password
-    });
-
-    user.save().then((doc) => {
-       res.send(doc);
-    }, (err) => {
-        res.send(err);
-    });
+app.delete('/todos/:id', (req, res) => {
+    var id = req.params.id;
+    if(!ObjectId.isValid) {
+        return res.status(404).send();
+    }
+    Todo.findByIdAndRemove(id).then((todo) => {
+      if(!todo) {
+          return res.status(404).send();
+      }  
+      res.send({todo});  
+    }).catch((e) => {
+       res.status(400).send();
+    })
 })
+
+app.patch('/todos/:id', (req, res) => {
+   var id = req.params.id;
+   var body = _.pick(req.body, ['text', 'completed']);
+   if(!ObjectId.isValid) {
+    return res.status(404).send();
+   }
+   if(_.isBoolean(body.completed) && body.completed) {
+     body.completedAt = new Date().getTime();
+   } else {
+     body.completed = false;
+     body.completedAt = null;
+   }
+   Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+     if(!todo) {
+        return res.status(404).send();
+     }  
+     res.send(todo);
+   }).catch((e) => {
+    res.status(400).send();
+ })
+})
+
 
 app.listen('3000', () => {
-  console.log('server up on port 3000');
+  console.log(`server up on port ${port}`);
 })
 
-
+module.exports = {app};
 
 
 // var newTodo = new Todo({
